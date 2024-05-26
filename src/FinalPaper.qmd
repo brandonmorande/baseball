@@ -1,0 +1,322 @@
+---
+title: "CSSS 512 Final Paper"
+author: "Eddie Hock & Brandon Morande"
+date: "`r Sys.time()`"
+date-format: long
+format: 
+  pdf:
+    keep-tex: true
+    include-in-header:
+       text: |
+         \usepackage{fvextra}
+         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+include-before-body:
+  text: |
+    \RecustomVerbatimEnvironment{verbatim}{Verbatim}{
+      showspaces = false,
+      showtabs = false,
+      breaksymbolleft={},
+      breaklines
+    }
+mainfont: TimesNewRomanPSMT
+monofont: PT Mono
+sansfont: TimesNewRomanPSMT
+---
+
+```{r setup, echo = FALSE, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, error = FALSE, warning = FALSE, message = FALSE)
+
+# Clean Environment
+rm(list=ls())
+
+# Load packages
+library(tseries)
+library(lmtest)
+library(urca)
+library(stargazer)
+library(RColorBrewer)      
+library(MASS)
+library(tidyverse)
+library(Lahman)
+```
+
+# Load & Wrangle Data
+
+```{r}
+
+# Load data
+data(Batting)
+
+# Mutate columns
+
+Batting <- Batting |>
+  mutate(AVG = (H/AB),
+         SR = (SO/AB),
+         HRR = (HR/AB),
+         WR = (BB/AB)) |>
+  filter(AB > 25) |>
+  filter(yearID > 1919 & yearID < 2020)
+
+# Create league-wide ts dataframe
+
+batting_analysis <- Batting |>
+  select(yearID,
+         AVG,
+         SR,
+         HR) |>
+  group_by(yearID) |>
+  summarize(AVG = mean(AVG),
+            SR = mean(SR),
+            HR = mean(HR))
+```
+
+# Combined Outcomes Plot
+
+```{r}
+# Plot combined outcomes
+Batting |>
+  group_by(yearID) |>
+  summarize(AVG = mean(AVG),
+            SR = mean(SR),
+            HRR = mean(HRR),
+            WR = mean(WR)
+            ) |>
+  ggplot(aes(x = yearID,
+             y = AVG)) +
+  geom_point(color = "blue") +
+  geom_line(color = "blue") +
+  geom_point(aes( x = yearID,
+                  y = SR), color = "red") +
+  geom_line(aes( x = yearID,
+                  y = SR), color = "red") +
+  geom_point(aes( x = yearID,
+                  y = HRR), color = "green") +
+  geom_line(aes( x = yearID,
+                  y = HRR), color = "green") +
+    geom_point(aes( x = yearID,
+                  y = WR), color = "gold") +
+  geom_line(aes( x = yearID,
+                  y = WR), color = "gold") +
+  geom_vline(xintercept = c(1942, 1961, 1977, 1994, 2006)) +
+  labs(title = "Batting Outcomes by Year",
+       x = "Year",
+       y = "League-Wide AVG")
+
+```
+
+# Batting AVG Analysis
+## Batting AVG Plot
+
+```{r}
+
+# Plot BA
+
+Batting |>
+  group_by(yearID) |>
+  summarize(AVG = mean(AVG)) |>
+  ggplot(aes(x=yearID,
+             y= AVG)) +
+  geom_point() +
+  geom_line() +
+  geom_vline(xintercept = c(1942, 1961, 1977, 1994, 2006), linetype = "dashed", color = "red") +
+  labs(title = "Batting AVG by Year",
+       x = "Year",
+       y = "League-Wide Average") +
+  theme_light()
+```
+
+## Analyze Batting AVG Time Series
+
+```{r}
+
+# Create AVG ts
+ts_AVG <- ts(batting_analysis$AVG, start = 1920, freq = 1)
+
+# ACF and PACF for AVG ts
+acf(ts_AVG, main = "Batting Average ACF")
+pacf(ts_AVG, main = "Batting Average PACF")
+```
+
+## Demean Batting AVG Time Series
+
+```{r}
+
+# Demean AVG by era
+
+ts_AVG_pre1942 <- ts(ts_AVG[1:22])
+ts_AVG_pre1942_demean <- ts((ts_AVG_pre1942 - mean(ts_AVG_pre1942)))
+ts_AVG_pre1961 <- ts(ts_AVG[23:41])
+ts_AVG_pre1961_demean <- ts((ts_AVG_pre1961 - mean(ts_AVG_pre1961)))
+ts_AVG_pre1977 <- ts(ts_AVG[42:57])
+ts_AVG_pre1977_demean <- ts((ts_AVG_pre1977 - mean(ts_AVG_pre1977)))
+ts_AVG_pre1994 <- ts(ts_AVG[58:74])
+ts_AVG_pre1994_demean <- ts((ts_AVG_pre1994 - mean(ts_AVG_pre1994)))
+ts_AVG_pre2006 <- ts(ts_AVG[75:86])
+ts_AVG_pre2006_demean <- ts((ts_AVG_pre2006 - mean(ts_AVG_pre2006)))
+ts_AVG_pre2020 <- ts(ts_AVG[87:100])
+ts_AVG_pre2020_demean <- ts((ts_AVG_pre2020 - mean(ts_AVG_pre2020)))
+
+ts_AVG_demean <- ts(c(ts_AVG_pre1942_demean, ts_AVG_pre1961_demean, ts_AVG_pre1977_demean, ts_AVG_pre1994_demean, ts_AVG_pre2006_demean, ts_AVG_pre2020_demean), start = start(ts_AVG_pre1942_demean),  frequency = frequency(ts_AVG_pre1942_demean))
+
+# Plot and diagnose demeaned AVG ts
+
+plot(ts_AVG_demean, type = "line",
+     ylab = "League-Wide Average",
+     xlab = "Year",
+     xaxt = "n",
+     main = "Batting Average by Year, Demeaned")
+axis(1, at = seq(1, 100, by = 4), labels = seq(1920, 2018, by = 4))
+abline(reg = lm(ts_AVG_demean ~ time(ts_AVG_demean)), col = "blue")
+
+# ACFs and PACFs for demeaned AVG ts
+acf(ts_AVG_demean, main = "Batting Average ACF, Demeaned")
+pacf(ts_AVG_demean, main = "Batting Average PACF, Demeaned")
+```
+
+# Strikout Rate Analysis
+
+## Strikeout Rate Plot
+
+```{r}
+
+# Plot SR
+
+Batting |>
+  group_by(yearID) |>
+  summarize(SR = mean(SR)) |>
+  ggplot(aes(x = yearID,
+             y = SR)) +
+  geom_point(color = "blue") +
+  geom_line(color = "blue") +
+  geom_vline(xintercept = c(1942, 1961, 1977, 1994, 2006), linetype = "dashed", color = "red") +
+  labs(title = "Strikeout Rate by Year",
+       x = "Year",
+       y = "League-Wide Average")  +
+  theme_light()
+```
+
+## Analyze Strikeout Rate Time Series
+
+```{r}
+
+# Create SR ts
+
+ts_SR <- ts(batting_analysis$SR, start = 1920, freq = 1)
+
+# ACFs and PACFs for SR ts
+
+acf(ts_SR, main = "Strikeout Rate ACF")
+pacf(ts_SR, main = "Strikeout Rate PACF")
+```
+
+## Demean Strikeout Rate Time Series
+
+
+```{r}
+
+# Demean SR by era
+
+ts_SR_pre1942 <- ts(ts_SR[1:22])
+ts_SR_pre1942_demean <- ts((ts_SR_pre1942 - mean(ts_SR_pre1942)))
+ts_SR_pre1961 <- ts(ts_SR[23:41])
+ts_SR_pre1961_demean <- ts((ts_SR_pre1961 - mean(ts_SR_pre1961)))
+ts_SR_pre1977 <- ts(ts_SR[42:57])
+ts_SR_pre1977_demean <- ts((ts_SR_pre1977 - mean(ts_SR_pre1977)))
+ts_SR_pre1994 <- ts(ts_SR[58:74])
+ts_SR_pre1994_demean <- ts((ts_SR_pre1994 - mean(ts_SR_pre1994)))
+ts_SR_pre2006 <- ts(ts_SR[75:86])
+ts_SR_pre2006_demean <- ts((ts_SR_pre2006 - mean(ts_SR_pre2006)))
+ts_SR_pre2020 <- ts(ts_SR[87:100])
+ts_SR_pre2020_demean <- ts((ts_SR_pre2020 - mean(ts_SR_pre2020)))
+
+ts_SR_demean <- ts(c(ts_SR_pre1942_demean, ts_SR_pre1961_demean, ts_SR_pre1977_demean, ts_SR_pre1994_demean, ts_SR_pre2006_demean, ts_SR_pre2020_demean), start = start(ts_SR_pre1942_demean),  frequency = frequency(ts_SR_pre1942_demean))
+
+# Plot and diagnose demeaned AVG ts
+
+plot(ts_SR_demean, type = "line",
+     ylab = "League-Wide Average",
+     xlab = "Year",
+     xaxt = "n",
+     main = "Strikeout Rate by Year, Demeaned")
+axis(1, at = seq(1, 100, by = 4), labels = seq(1920, 2018, by = 4))
+abline(reg = lm(ts_SR_demean ~ time(ts_SR_demean)), col = "blue")
+
+# ACFs and PACFs for demeaned AVG ts
+acf(ts_SR_demean, main = "Strikout Rate ACF, Demeaned")
+pacf(ts_SR_demean, main = "Strikeout Rate PACF, Demeaned")
+```
+
+# Home Run Analysis
+
+## Home Run Plot
+
+```{r}
+
+# Plot HR
+
+Batting |>
+  group_by(yearID) |>
+  summarize(HR = mean(HR)) |>
+  ggplot(aes(x = yearID,
+             y = HR)) +
+  geom_point(color = "blue") +
+  geom_line(color = "blue") +
+  geom_vline(xintercept = c(1942, 1961, 1977, 1994, 2006), linetype = "dashed", color = "red") +
+  labs(title = "Home Runs by Year",
+       x = "Year",
+       y = "League-Wide Average") +
+  theme_light()
+```
+
+## Analyze Homerun Time Series
+
+```{r}
+
+# Create HR ts
+ts_HR <- ts(batting_analysis$HR, start = 1920, freq = 1)
+
+#ACF and PACF of HR ts
+acf(ts_HR, main = "Homerun ACF")
+pacf(ts_HR, main = "Homerun PACF")
+```
+
+## Demean Homerun Time Series
+
+```{r}
+
+# Demean HR by era
+
+ts_HR_pre1942 <- ts(ts_HR[1:22])
+ts_HR_pre1942_demean <- ts((ts_HR_pre1942 - mean(ts_HR_pre1942)))
+ts_HR_pre1961 <- ts(ts_HR[23:41])
+ts_HR_pre1961_demean <- ts((ts_HR_pre1961 - mean(ts_HR_pre1961)))
+ts_HR_pre1977 <- ts(ts_HR[42:57])
+ts_HR_pre1977_demean <- ts((ts_HR_pre1977 - mean(ts_HR_pre1977)))
+ts_HR_pre1994 <- ts(ts_HR[58:74])
+ts_HR_pre1994_demean <- ts((ts_HR_pre1994 - mean(ts_HR_pre1994)))
+ts_HR_pre2006 <- ts(ts_HR[75:86])
+ts_HR_pre2006_demean <- ts((ts_HR_pre2006 - mean(ts_HR_pre2006)))
+ts_HR_pre2020 <- ts(ts_HR[87:100])
+ts_HR_pre2020_demean <- ts((ts_HR_pre2020 - mean(ts_HR_pre2020)))
+
+ts_HR_demean <- ts(c(ts_HR_pre1942_demean, ts_HR_pre1961_demean, ts_HR_pre1977_demean, ts_HR_pre1994_demean, ts_HR_pre2006_demean, ts_HR_pre2020_demean), start = start(ts_HR_pre1942_demean),  frequency = frequency(ts_HR_pre1942_demean))
+
+# Plot and diagnose demeaned AVG ts
+
+plot(ts_HR_demean, type = "line",
+     ylab = "League-Wide Average",
+     xlab = "Year",
+     xaxt = "n",
+     main = "Homeruns by Year, Demeaned")
+axis(1, at = seq(1, 100, by = 4), labels = seq(1920, 2018, by = 4))
+abline(reg = lm(ts_HR_demean ~ time(ts_HR_demean)), col = "blue")
+
+# ACFs and PACFs for demeaned AVG ts
+acf(ts_HR_demean, main = "Homeruns ACF, Demeaned")
+pacf(ts_HR_demean, main = "Homeruns Rate PACF, Demeaned")
+```
+
+# Appendix: R Code
+
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```
