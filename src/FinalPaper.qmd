@@ -52,8 +52,7 @@ data(Batting)
 Batting <- Batting |>
   mutate(AVG = (H/AB),
          SR = (SO/AB),
-         HRR = (HR/AB),
-         WR = (BB/AB)) |>
+         HRR = (HR/AB)) |>
   filter(AB > 25) |>
   filter(yearID > 1919 & yearID < 2020)
 
@@ -150,6 +149,10 @@ Batting |>
   geom_point() +
   geom_line() +
   geom_vline(xintercept = c(1942, 1961, 1977, 1994, 2006), linetype = "dashed", linewidth = 1, color = "red") +
+  scale_x_continuous(breaks = seq(1920, 2020, by = 10),
+    labels = function(x) ifelse(x %% 20 == 0, x, "")) +
+  scale_y_continuous(
+  labels = scales::number_format(accuracy = 0.001)) +
   labs(title = "League-Wide Batting Average by Year",
        x = "Year",
        y = "Batting Average") +
@@ -166,6 +169,7 @@ ts_AVG <- ts(batting_analysis$AVG, start = 1920, freq = 1)
 # Deterministic trend for AVG
 AVG_trend <- lm(ts_AVG ~ time(ts_AVG))
 summary(AVG_trend)
+confint(AVG_trend)
 
 # ACF and PACF for AVG ts
 acf(ts_AVG, main = "Batting Average ACF")
@@ -291,6 +295,11 @@ Batting |>
   geom_point() +
   geom_line() +
   geom_vline(xintercept = c(1942, 1961, 1977, 1994, 2006), linetype = "dashed", linewidth = 1, color = "red") +
+  scale_x_continuous(breaks = seq(1920, 2020, by = 10),
+    labels = function(x) ifelse(x %% 20 == 0, x, "")) +
+  scale_y_continuous(
+  labels = scales::number_format(accuracy = 0.001),
+  limits = c(0.100, 0.300)) +
   labs(title = "League-Wide Strikeout Rate by Year",
        x = "Year",
        y = "Strikeout Rate")  +
@@ -308,6 +317,7 @@ ts_SR <- ts(batting_analysis$SR, start = 1920, freq = 1)
 # Deterministic trend for SR
 SR_trend <- lm(ts_SR ~ time(ts_SR))
 summary(SR_trend)
+confint(SR_trend)
 
 # ACFs and PACFs for SR ts
 
@@ -439,6 +449,10 @@ Batting |>
   geom_point() +
   geom_line() +
   geom_vline(xintercept = c(1942, 1961, 1977, 1994, 2006), linetype = "dashed", linewidth = 1, color = "red") +
+  scale_x_continuous(breaks = seq(1920, 2020, by = 10),
+    labels = function(x) ifelse(x %% 20 == 0, x, "")) +
+  scale_y_continuous(
+  labels = scales::number_format(accuracy = 0.1)) +
   labs(title = "League-Wide Home Run Average by Year",
        x = "Year",
        y = "Home Runs") +
@@ -455,10 +469,11 @@ ts_HR <- ts(batting_analysis$HR, start = 1920, freq = 1)
 # Deterministic trend for HR
 HR_trend <- lm(ts_HR ~ time(ts_HR))
 summary(HR_trend)
+confint(HR_trend)
 
 #ACF and PACF of HR ts
-acf(ts_HR, main = "Home Run ACF")
-pacf(ts_HR, main = "Home Run PACF")
+acf(ts_HR, main = "Home Runs ACF")
+pacf(ts_HR, main = "Home Runs PACF")
 ```
 
 ## Demean Homerun Time Series
