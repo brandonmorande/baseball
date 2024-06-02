@@ -218,6 +218,7 @@ pacf(ts_AVG_demean, main = "Batting Average PACF, Demeaned")
 
 # Testing for AVG non-stationarity
 
+adf.test(ts_AVG)
 adf.test(ts_AVG_demean)
 
 # Create ts for AVG models
@@ -233,6 +234,24 @@ ts_AVG_1961 <- ts(batting_analysis_1961$AVG)
 ts_AVG_1977 <- ts(batting_analysis_1977$AVG)
 ts_AVG_1994 <- ts(batting_analysis_1994$AVG)
 ts_AVG_2006 <- ts(batting_analysis_2006$AVG)
+
+# AVG ARMA models
+
+ar0_AVG_demean <- arima(
+  ts_AVG_demean,
+  order = c(0, 0, 0),
+  include.mean = TRUE
+  )
+
+Box.test(ar0_AVG_demean$residuals)
+
+ar1_AVG_demean <- arima(
+  ts_AVG_demean,
+  order = c(1, 0, 0),
+  include.mean = TRUE
+  )
+
+Box.test(ar1_AVG_demean$residuals)
 
 ar1_AVG_1942 <- arima(
   ts_AVG_1942,
@@ -367,6 +386,7 @@ pacf(ts_SR_demean, main = "Strikeout Rate PACF, Demeaned")
 
 # Testing for SR non-stationarity
 
+adf.test(ts_SR)
 adf.test(ts_SR_demean)
 
 # Create ts for SR models
@@ -377,13 +397,37 @@ ts_SR_1977 <- ts(batting_analysis_1977$SR)
 ts_SR_1994 <- ts(batting_analysis_1994$SR)
 ts_SR_2006 <- ts(batting_analysis_2006$SR)
 
-arima_SR <- arima(
-  ts_SR,
+ar0_SR_demean <- arima(
+  ts_SR_demean,
+  order = c(0, 0, 0),
+  include.mean = TRUE
+  )
+
+Box.test(ar0_SR_demean$residuals)
+
+ar1_SR_demean <- arima(
+  ts_SR_demean,
+  order = c(1, 0, 0),
+  include.mean = TRUE
+  )
+
+Box.test(ar1_SR_demean$residuals)
+
+arima010_SR <- arima(
+  ts_SR_demean,
+  order = c(0, 1, 0),
+  include.mean = TRUE
+  )
+
+Box.test(arima010_SR$residuals)
+
+arima110_SR <- arima(
+  ts_SR_demean,
   order = c(1, 1, 0),
   include.mean = TRUE
   )
 
-Box.test(arima_SR$residuals) # Serial correlation remains
+Box.test(arima110_SR$residuals)
 
 ar1_SR_1942 <- arima(
   ts_SR_1942,
@@ -472,8 +516,8 @@ summary(HR_trend)
 confint(HR_trend)
 
 #ACF and PACF of HR ts
-acf(ts_HR, main = "Home Runs ACF")
-pacf(ts_HR, main = "Home Runs PACF")
+acf(ts_HR, main = "Home Runs ACF", lag.max = 30)
+pacf(ts_HR, main = "Home Runs PACF", lag.max = 30)
 ```
 
 ## Demean Homerun Time Series
@@ -516,6 +560,7 @@ pacf(ts_HR_demean, main = "Home Runs PACF, Demeaned")
 
 # Testing for SR non-stationarity
 
+adf.test(ts_HR)
 adf.test(ts_HR_demean)
 
 # Create ts for HR models
@@ -525,6 +570,14 @@ ts_HR_1961 <- ts(batting_analysis_1961$HR)
 ts_HR_1977 <- ts(batting_analysis_1977$HR)
 ts_HR_1994 <- ts(batting_analysis_1994$HR)
 ts_HR_2006 <- ts(batting_analysis_2006$HR)
+
+ar0_HR_demean <- arima(
+  ts_HR_demean,
+  order = c(0, 0, 0),
+  include.mean = TRUE
+  )
+
+Box.test(ar0_HR_demean$residuals) 
 
 ar1_HR_demean <- arima(
   ts_HR_demean,
