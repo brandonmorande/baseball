@@ -435,50 +435,97 @@ arima110_SR <- arima(
 
 Box.test(arima110_SR$residuals)
 
-ar1_SR_1942 <- arima(
-  ts_SR_1942,
-  order = c(1, 1, 0),
-  xreg = ts_1942,
-  include.mean = TRUE
-  )
+# AR(1) models for SR
+
+# ar1_SR_1942 <- arima(
+#   ts_SR_1942,
+#   order = c(1, 0, 0),
+#   xreg = ts_1942,
+#   include.mean = TRUE
+#   ) # Will not run due to non-stationarity
 
 ar1_SR_1961 <- arima(
   ts_SR_1961,
-  order = c(1, 1, 0),
+  order = c(1, 0, 0),
   xreg = ts_1961,
   include.mean = TRUE
   )
 
 ar1_SR_1977 <- arima(
   ts_SR_1977,
-  order = c(1, 1, 0),
+  order = c(1, 0, 0),
   xreg = ts_1977,
   include.mean = TRUE
   )
 
 ar1_SR_1994 <- arima(
   ts_SR_1994,
-  order = c(1, 1, 0),
+  order = c(1, 0, 0),
   xreg = ts_1994,
   include.mean = TRUE
   )
 
-ar1_SR_2006 <- arima(
+# ar1_SR_2006 <- arima(
+#   ts_SR_2006,
+#   order = c(1, 0, 0),
+#   xreg = ts_2006,
+#   include.mean = TRUE
+#   ) # Will not run due to non-stationarity
+
+ar1_SR_models <- list(ar1_SR_1961, ar1_SR_1977, ar1_SR_1994)
+
+stargazer(ar1_SR_models,
+          type = "latex",
+          title = "Stationary Strikeout Rate Models",
+          dep.var.labels = c("1942-1976", "1961-1993", "1977-2005"),
+          covariate.labels = c("AR(1)", "Intercept", "1961", "1977", "1994")
+          )
+
+# ARIMA(0,1,0) models for SR
+
+arima_SR_1942 <- arima(
+  ts_SR_1942,
+  order = c(0, 1, 0),
+  xreg = ts_1942,
+  include.mean = TRUE
+  )
+
+arima_SR_1961 <- arima(
+  ts_SR_1961,
+  order = c(0, 1, 0),
+  xreg = ts_1961,
+  include.mean = TRUE
+  )
+
+arima_SR_1977 <- arima(
+  ts_SR_1977,
+  order = c(0, 1, 0),
+  xreg = ts_1977,
+  include.mean = TRUE
+  )
+
+arima_SR_1994 <- arima(
+  ts_SR_1994,
+  order = c(0, 1, 0),
+  xreg = ts_1994,
+  include.mean = TRUE
+  )
+
+arima_SR_2006 <- arima(
   ts_SR_2006,
-  order = c(1, 1, 0),
+  order = c(0, 1, 0),
   xreg = ts_2006,
   include.mean = TRUE
   )
 
-ar_SR_models <- list(ar1_SR_1942, ar1_SR_1961, ar1_SR_1977, ar1_SR_1994, ar1_SR_2006)
+arima_SR_models <- list(arima_SR_1942, arima_SR_1961, arima_SR_1977, arima_SR_1994, arima_SR_2006)
 
-stargazer(ar_SR_models,
+stargazer(arima_SR_models,
           type = "latex",
           title = "First-Differenced Strikeout Rate Models",
           dep.var.labels = c("1920-1960", "1942-1976", "1961-1993", "1977-2005", "1994-2019"),
-          covariate.labels = c("AR(1)", "1942", "1961", "1977", "1994", "2006")
+          covariate.labels = c("1942", "1961", "1977", "1994", "2006")
           )
-
 ```
 
 # Home Run Analysis
@@ -828,142 +875,135 @@ Batting |>
   theme_light()
 ```
 
-## Analyze Walk Rate Time Series
+## Analyze OPS Time Series
 
 ```{r}
 
 # Create OPS ts
 ts_OPS <- ts(batting_analysis$OPS, start = 1920, freq = 1)
 
-# Deterministic trend for WR
-WR_trend <- lm(ts_WR ~ time(ts_WR))
-summary(WR_trend)
-confint(WR_trend)
+# Deterministic trend for OPS
+OPS_trend <- lm(ts_OPS ~ time(ts_OPS))
+summary(OPS_trend)
+confint(OPS_trend)
 
-# ACF and PACF for WR ts
-acf(ts_WR, main = "Walk Rate ACF")
-pacf(ts_WR, main = "Walk Rate PACF")
+# ACF and PACF for OPS ts
+acf(ts_OPS, main = "On-Base Plus Slugging ACF")
+pacf(ts_OPS, main = "On-Base Plus Slugging PACF")
 ```
 
-## Demean WR Time Series
+## Demean OPS Time Series
 
 ```{r}
 
-# Demean WR by era
+# Demean OPS by era
 
-ts_WR_pre1942 <- ts(ts_WR[1:22])
-ts_WR_pre1942_demean <- ts((ts_WR_pre1942 - mean(ts_WR_pre1942)))
-ts_WR_pre1961 <- ts(ts_WR[23:41])
-ts_WR_pre1961_demean <- ts((ts_WR_pre1961 - mean(ts_WR_pre1961)))
-ts_WR_pre1977 <- ts(ts_WR[42:57])
-ts_WR_pre1977_demean <- ts((ts_WR_pre1977 - mean(ts_WR_pre1977)))
-ts_WR_pre1994 <- ts(ts_WR[58:74])
-ts_WR_pre1994_demean <- ts((ts_WR_pre1994 - mean(ts_WR_pre1994)))
-ts_WR_pre2006 <- ts(ts_WR[75:86])
-ts_WR_pre2006_demean <- ts((ts_WR_pre2006 - mean(ts_WR_pre2006)))
-ts_WR_pre2020 <- ts(ts_WR[87:100])
-ts_WR_pre2020_demean <- ts((ts_WR_pre2020 - mean(ts_WR_pre2020)))
+ts_OPS_pre1942 <- ts(ts_OPS[1:22])
+ts_OPS_pre1942_demean <- ts((ts_OPS_pre1942 - mean(ts_OPS_pre1942)))
+ts_OPS_pre1961 <- ts(ts_OPS[23:41])
+ts_OPS_pre1961_demean <- ts((ts_OPS_pre1961 - mean(ts_OPS_pre1961)))
+ts_OPS_pre1977 <- ts(ts_OPS[42:57])
+ts_OPS_pre1977_demean <- ts((ts_OPS_pre1977 - mean(ts_OPS_pre1977)))
+ts_OPS_pre1994 <- ts(ts_OPS[58:74])
+ts_OPS_pre1994_demean <- ts((ts_OPS_pre1994 - mean(ts_OPS_pre1994)))
+ts_OPS_pre2006 <- ts(ts_OPS[75:86])
+ts_OPS_pre2006_demean <- ts((ts_OPS_pre2006 - mean(ts_OPS_pre2006)))
+ts_OPS_pre2020 <- ts(ts_OPS[87:100])
+ts_OPS_pre2020_demean <- ts((ts_OPS_pre2020 - mean(ts_OPS_pre2020)))
 
-ts_WR_demean <- ts(c(ts_WR_pre1942_demean, ts_WR_pre1961_demean, ts_WR_pre1977_demean, ts_WR_pre1994_demean, ts_WR_pre2006_demean, ts_WR_pre2020_demean), start = start(ts_WR_pre1942_demean),  frequency = frequency(ts_WR_pre1942_demean))
+ts_OPS_demean <- ts(c(ts_OPS_pre1942_demean, ts_OPS_pre1961_demean, ts_OPS_pre1977_demean, ts_OPS_pre1994_demean, ts_OPS_pre2006_demean, ts_OPS_pre2020_demean), start = start(ts_OPS_pre1942_demean),  frequency = frequency(ts_OPS_pre1942_demean))
 
-# Plot and diagnose demeaned WR ts
+# Plot and diagnose demeaned OPS ts
 
-plot(ts_WR_demean, type = "line",
+plot(ts_OPS_demean, type = "line",
      ylab = "League-Wide Average",
      xlab = "Year",
      xaxt = "n",
-     main = "Walk Rate by Year, Demeaned")
+     main = "On-Base Plus Slugging by Year, Demeaned")
 axis(1, at = seq(1, 100, by = 4), labels = seq(1920, 2018, by = 4))
-abline(reg = lm(ts_WR_demean ~ time(ts_WR_demean)), col = "blue")
+abline(reg = lm(ts_OPS_demean ~ time(ts_OPS_demean)), col = "blue")
 
-# ACFs and PACFs for demeaned WR ts
-acf(ts_WR_demean, main = "Walk Rate ACF, Demeaned")
-pacf(ts_WR_demean, main = "Walk Rate PACF, Demeaned")
+# ACFs and PACFs for demeaned OPS ts
+acf(ts_OPS_demean, main = "On-Base Plus Slugging ACF, Demeaned")
+pacf(ts_OPS_demean, main = "On-Base Plus PACF, Demeaned")
 ```
 
-## WR Models
+## OPS Models
 
 ```{r}
 
-# Testing for WR non-stationarity
+# Testing for OPS non-stationarity
 
-adf.test(ts_WR)
-adf.test(ts_WR_demean)
+adf.test(ts_OPS)
+adf.test(ts_OPS_demean)
 
-# Create ts for WR models
+# Create ts for OPS models
 
-ts_WR_1942 <- ts(batting_analysis_1942$WR)
-ts_WR_1961 <- ts(batting_analysis_1961$WR)
-ts_WR_1977 <- ts(batting_analysis_1977$WR)
-ts_WR_1994 <- ts(batting_analysis_1994$WR)
-ts_WR_2006 <- ts(batting_analysis_2006$WR)
+ts_OPS_1942 <- ts(batting_analysis_1942$OPS)
+ts_OPS_1961 <- ts(batting_analysis_1961$OPS)
+ts_OPS_1977 <- ts(batting_analysis_1977$OPS)
+ts_OPS_1994 <- ts(batting_analysis_1994$OPS)
+ts_OPS_2006 <- ts(batting_analysis_2006$OPS)
 
 # WR ARMA models
 
-ar0_WR_demean <- arima(
-  ts_WR_demean,
+ar0_OPS_demean <- arima(
+  ts_OPS_demean,
   order = c(0, 0, 0),
   include.mean = TRUE
   )
 
-Box.test(ar0_WR_demean$residuals)
+Box.test(ar0_OPS_demean$residuals)
 
-ar1_WR_demean <- arima(
-  ts_WR_demean,
+ar1_OPS_demean <- arima(
+  ts_OPS_demean,
   order = c(1, 0, 0),
   include.mean = TRUE
   )
 
-Box.test(ar1_WR_demean$residuals)
+Box.test(ar1_OPS_demean$residuals)
 
-ma1_WR_demean <- arima(
-  ts_WR_demean,
-  order = c(0, 1, 0),
-  include.mean = TRUE
-  )
 
-Box.test(ma1_WR_demean$residuals)
-
-ar1_WR_1942 <- arima(
-  ts_WR_1942,
+ar1_OPS_1942 <- arima(
+  ts_OPS_1942,
   order = c(1, 0, 0),
   xreg = ts_1942,
   include.mean = TRUE
   )
 
-ar1_WR_1961 <- arima(
-  ts_WR_1961,
+ar1_OPS_1961 <- arima(
+  ts_OPS_1961,
   order = c(1, 0, 0),
   xreg = ts_1961,
   include.mean = TRUE
   )
 
-ar1_WR_1977 <- arima(
-  ts_WR_1977,
+ar1_OPS_1977 <- arima(
+  ts_OPS_1977,
   order = c(1, 0, 0),
   xreg = ts_1977,
   include.mean = TRUE
   )
 
-ar1_WR_1994 <- arima(
-  ts_WR_1994,
+ar1_OPS_1994 <- arima(
+  ts_OPS_1994,
   order = c(1, 0, 0),
   xreg = ts_1994,
   include.mean = TRUE
   )
 
-ar1_WR_2006 <- arima(
-  ts_WR_2006,
+ar1_OPS_2006 <- arima(
+  ts_OPS_2006,
   order = c(1, 0, 0),
   xreg = ts_2006,
   include.mean = TRUE
   )
 
-ar_WR_models <- list(ar1_WR_1942, ar1_WR_1961, ar1_WR_1977, ar1_WR_1994, ar1_WR_2006)
+ar_OPS_models <- list(ar1_OPS_1942, ar1_OPS_1961, ar1_OPS_1977, ar1_OPS_1994, ar1_OPS_2006)
 
-stargazer(ar_WR_models,
+stargazer(ar_OPS_models,
           type = "latex",
-          title = "Walk Rate Models",
+          title = "On-Base Plus Slugging Models",
           dep.var.labels = c("1920-1960", "1942-1976", "1961-1993", "1977-2005", "1994-2019"),
           covariate.labels = c("AR(1)", "Intercept", "1942", "1961", "1977", "1994", "2006")
           )
